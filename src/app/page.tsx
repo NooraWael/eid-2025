@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "./lib/supabase";
 import CodeEditor from "./components/codeEditor";
 import PreviewPane from "./components/previewPane";
@@ -128,6 +128,7 @@ const defaultHtmlTemplate = `<!DOCTYPE html>
 
 const Home = () => {
   const [name, setName] = useState<string>("");
+  const [nameStatus, setNameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [htmlCode, setHtmlCode] = useState<string>(defaultHtmlTemplate);
   const [cssCode, setCssCode] = useState<string>("");
@@ -153,6 +154,44 @@ const Home = () => {
     }
   };
 
+  const checkNameAvailability = async (nameToCheck: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from("eid_submissions")
+        .select("name")
+        .eq("name", nameToCheck.trim())
+        .single();
+
+      if (error && error.code === 'PGRST116') {
+        // No rows found - name is available
+        return true;
+      }
+
+      if (error) throw error;
+
+      // Name exists
+      return false;
+    } catch (error) {
+      console.error("Error checking name:", error);
+      return false;
+    }
+  };
+
+  // Debounced name checking
+  const checkNameWithDelay = useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    
+    return (nameToCheck: string) => {
+      clearTimeout(timeoutId);
+      setNameStatus('checking');
+      
+      timeoutId = setTimeout(async () => {
+        const isAvailable = await checkNameAvailability(nameToCheck);
+        setNameStatus(isAvailable ? 'available' : 'taken');
+      }, 800); // Wait 800ms after user stops typing
+    };
+  }, []);
+
   const handleSubmit = async (): Promise<void> => {
     if (!name.trim()) {
       alert("Please enter your name!");
@@ -162,6 +201,15 @@ const Home = () => {
     setIsLoading(true);
 
     try {
+      // Check if name is already taken
+      const isNameAvailable = await checkNameAvailability(name.trim());
+      
+      if (!isNameAvailable) {
+        alert(`Sorry, the name "${name.trim()}" is already taken! Please choose a different name.`);
+        setIsLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from("eid_submissions")
         .insert([
@@ -174,7 +222,14 @@ const Home = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // Handle unique constraint violation (backup check)
+        if (error.code === '23505') {
+          alert(`The name "${name.trim()}" was just taken by someone else! Please choose a different name.`);
+          return;
+        }
+        throw error;
+      }
 
       alert("Your Eid greeting has been saved! 🌙");
       await fetchSubmissions();
@@ -193,11 +248,28 @@ const Home = () => {
       alert("Please enter your name first!");
       return;
     }
+    if (nameStatus === 'taken') {
+      alert("This name is already taken! Please choose a different name.");
+      return;
+    }
+    if (nameStatus === 'checking') {
+      alert("Please wait while we check if this name is available.");
+      return;
+    }
     setIsCreating(true);
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setName(e.target.value);
+    const newName = e.target.value;
+    setName(newName);
+    
+    // Reset status when name changes
+    if (newName.trim().length === 0) {
+      setNameStatus('idle');
+    } else if (newName.trim().length >= 2) {
+      // Check name availability after user stops typing
+      checkNameWithDelay(newName.trim());
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>): void => {
@@ -222,23 +294,61 @@ const Home = () => {
             Design a glowing Eid greeting and share it with the world ✨
           </p>
 
-          <input
-            type="text"
-            placeholder="Your name..."
-            value={name}
-            onChange={handleNameChange}
-            onKeyPress={handleKeyPress}
-            maxLength={50}
-            className="w-full max-w-sm px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-          />
+          <div className="relative w-full max-w-sm">
+            <input
+              type="text"
+              placeholder="Your name..."
+              value={name}
+              onChange={handleNameChange}
+              onKeyPress={handleKeyPress}
+              maxLength={50}
+              className={`w-full px-4 py-3 rounded-xl bg-white/10 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 ${
+                nameStatus === 'taken' 
+                  ? 'border-red-400 focus:ring-red-400' 
+                  : nameStatus === 'available'
+                  ? 'border-green-400 focus:ring-green-400'
+                  : 'border-white/20 focus:ring-purple-500'
+              }`}
+            />
+            
+            {/* Name status indicator */}
+            {name.trim().length >= 2 && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {nameStatus === 'checking' && (
+                  <div className="animate-spin w-4 h-4 border-2 border-purple-400 border-t-transparent rounded-full"></div>
+                )}
+                {nameStatus === 'available' && (
+                  <div className="text-green-400 text-lg">✓</div>
+                )}
+                {nameStatus === 'taken' && (
+                  <div className="text-red-400 text-lg">✗</div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Status message */}
+          {name.trim().length >= 2 && (
+            <div className="text-sm w-full max-w-sm">
+              {nameStatus === 'checking' && (
+                <span className="text-purple-300">Checking availability...</span>
+              )}
+              {nameStatus === 'available' && (
+                <span className="text-green-400">✓ Name is available!</span>
+              )}
+              {nameStatus === 'taken' && (
+                <span className="text-red-400">✗ Name is already taken</span>
+              )}
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
             <button
               onClick={startCreating}
-              disabled={!name.trim()}
+              disabled={!name.trim() || nameStatus === 'taken' || nameStatus === 'checking'}
               className="flex-1 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-black font-semibold py-3 rounded-xl transition-all hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              🚀 Start Creating
+              {nameStatus === 'checking' ? 'Checking...' : '🚀 Start Creating'}
             </button>
 
             <button
@@ -250,7 +360,6 @@ const Home = () => {
                 {submissions.length}
               </span>
             </button>
-            
           </div>
 
           {submissions.length > 0 && (

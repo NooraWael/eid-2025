@@ -279,7 +279,6 @@ const Gallery = () => {
                     {/* View button */}
                     <a
                       href={`/view/${encodeURIComponent(submission.name)}`}
-                      target="_blank"
                       rel="noopener noreferrer"
                       className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white py-2 px-4 rounded-lg hover:from-amber-600 hover:to-amber-700 transition-all font-medium text-center block group-hover:shadow-lg"
                     >
