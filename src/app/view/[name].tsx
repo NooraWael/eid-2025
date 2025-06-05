@@ -1,50 +1,50 @@
-import { useRouter } from 'next/router'
-import { useEffect, useState } from 'react'
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import { supabase } from '../lib/supabase'
-import { EidSubmission } from '../types'
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import type { NextPage } from "next";
+import Head from "next/head";
+import { supabase } from "../lib/supabase";
+import { EidSubmission } from "../types";
 
 const ViewSubmission: NextPage = () => {
-  const router = useRouter()
-  const { name } = router.query
-  const [submission, setSubmission] = useState<EidSubmission | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
+  const router = useRouter();
+  const { name } = router.query;
+  const [submission, setSubmission] = useState<EidSubmission | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (name && typeof name === 'string') {
-      fetchSubmission(name)
+    if (name && typeof name === "string") {
+      fetchSubmission(name);
     }
-  }, [name])
+  }, [name]);
 
   const fetchSubmission = async (submissionName: string): Promise<void> => {
     try {
-      setLoading(true)
-      setError(null)
+      setLoading(true);
+      setError(null);
 
       const { data, error: fetchError } = await supabase
-        .from('eid_submissions')
-        .select('*')
-        .eq('name', decodeURIComponent(submissionName))
-        .order('created_at', { ascending: false })
+        .from("eid_submissions")
+        .select("*")
+        .eq("name", decodeURIComponent(submissionName))
+        .order("created_at", { ascending: false })
         .limit(1)
-        .maybeSingle()
+        .maybeSingle();
 
-      if (fetchError) throw fetchError
+      if (fetchError) throw fetchError;
 
       if (data) {
-        setSubmission(data)
+        setSubmission(data);
       } else {
-        setError('Creation not found')
+        setError("Creation not found");
       }
     } catch (err) {
-      console.error('Error fetching submission:', err)
-      setError('Failed to load creation')
+      console.error("Error fetching submission:", err);
+      setError("Failed to load creation");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -59,7 +59,7 @@ const ViewSubmission: NextPage = () => {
           </div>
         </div>
       </>
-    )
+    );
   }
 
   if (error || !submission) {
@@ -84,31 +84,38 @@ const ViewSubmission: NextPage = () => {
           </div>
         </div>
       </>
-    )
+    );
   }
 
-  let finalHTML = submission.html_content
-  
+  let finalHTML = submission.html_content;
+
   // Inject additional CSS if provided
   if (submission.css_content?.trim()) {
-    const cssInjection = `<style>${submission.css_content}</style></head>`
-    finalHTML = finalHTML.replace('</head>', cssInjection)
+    const cssInjection = `<style>${submission.css_content}</style></head>`;
+    finalHTML = finalHTML.replace("</head>", cssInjection);
   }
 
   return (
     <>
       <Head>
         <title>{submission.name}'s Eid Greeting | Eid Mubarak Canvas</title>
-        <meta name="description" content={`Beautiful Eid greeting created by ${submission.name}`} />
-        <meta property="og:title" content={`${submission.name}'s Eid Greeting`} />
-        <meta property="og:description" content="Beautiful Eid Mubarak greeting" />
-      </Head>
-      
-      <div className="min-h-screen relative">
-        <div
-          dangerouslySetInnerHTML={{ __html: finalHTML }}
+        <meta
+          name="description"
+          content={`Beautiful Eid greeting created by ${submission.name}`}
         />
-        
+        <meta
+          property="og:title"
+          content={`${submission.name}'s Eid Greeting`}
+        />
+        <meta
+          property="og:description"
+          content="Beautiful Eid Mubarak greeting"
+        />
+      </Head>
+
+      <div className="min-h-screen relative">
+        <div dangerouslySetInnerHTML={{ __html: finalHTML }} />
+
         {/* Floating creator info */}
         <div className="fixed bottom-4 right-4 bg-black bg-opacity-70 text-white p-3 rounded-lg backdrop-blur-sm">
           <div className="text-sm">
@@ -117,7 +124,7 @@ const ViewSubmission: NextPage = () => {
           <div className="text-xs text-gray-300 mb-2">
             {new Date(submission.created_at).toLocaleDateString()}
           </div>
-          <a 
+          <a
             href="/"
             className="text-blue-300 hover:text-blue-200 text-sm transition-colors"
           >
@@ -126,7 +133,7 @@ const ViewSubmission: NextPage = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ViewSubmission
+export default ViewSubmission;

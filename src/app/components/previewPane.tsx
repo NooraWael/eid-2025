@@ -1,35 +1,36 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef } from "react";
 
 interface PreviewPaneProps {
-  htmlCode: string
-  cssCode: string
+  htmlCode: string;
+  cssCode: string;
 }
 
 const PreviewPane: React.FC<PreviewPaneProps> = ({ htmlCode, cssCode }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useEffect(() => {
     if (iframeRef.current) {
-      const iframe = iframeRef.current
-      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document
-      
+      const iframe = iframeRef.current;
+      const iframeDoc =
+        iframe.contentDocument || iframe.contentWindow?.document;
+
       if (iframeDoc) {
-        let finalHTML = htmlCode
-        
+        let finalHTML = htmlCode;
+
         // Inject additional CSS if provided
         if (cssCode.trim()) {
-          const cssInjection = `<style>${cssCode}</style></head>`
-          finalHTML = finalHTML.replace('</head>', cssInjection)
+          const cssInjection = `<style>${cssCode}</style></head>`;
+          finalHTML = finalHTML.replace("</head>", cssInjection);
         }
-        
-        iframeDoc.open()
-        iframeDoc.write(finalHTML)
-        iframeDoc.close()
+
+        iframeDoc.open();
+        iframeDoc.write(finalHTML);
+        iframeDoc.close();
       }
     }
-  }, [htmlCode, cssCode])
+  }, [htmlCode, cssCode]);
 
   return (
     <div className="w-1/2 bg-white">
@@ -42,7 +43,7 @@ const PreviewPane: React.FC<PreviewPaneProps> = ({ htmlCode, cssCode }) => {
         />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default PreviewPane
+export default PreviewPane;

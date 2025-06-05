@@ -126,7 +126,6 @@ const defaultHtmlTemplate = `<!DOCTYPE html>
 </body>
 </html>`;
 
-
 const Home = () => {
   const [name, setName] = useState<string>("");
   const [isCreating, setIsCreating] = useState<boolean>(false);
@@ -222,7 +221,7 @@ const Home = () => {
           <p className="text-gray-300 text-base md:text-lg max-w-md">
             Design a glowing Eid greeting and share it with the world ✨
           </p>
-  
+
           <input
             type="text"
             placeholder="Your name..."
@@ -232,7 +231,7 @@ const Home = () => {
             maxLength={50}
             className="w-full max-w-sm px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
-  
+
           <div className="flex flex-col sm:flex-row gap-4 w-full max-w-sm">
             <button
               onClick={startCreating}
@@ -241,18 +240,19 @@ const Home = () => {
             >
               🚀 Start Creating
             </button>
-  
+
             <button
               onClick={goToGallery}
               className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-700 text-white font-semibold py-3 rounded-xl hover:scale-105 transition-all flex items-center justify-center gap-2"
             >
-               Gallery
+              Gallery
               <span className="bg-indigo-800 px-2 py-1 rounded-full text-xs">
                 {submissions.length}
               </span>
             </button>
+            
           </div>
-  
+
           {submissions.length > 0 && (
             <div className="pt-6 text-sm text-gray-400 space-y-1">
               <p className="text-white font-medium">Recent Creations:</p>
@@ -270,18 +270,18 @@ const Home = () => {
             </div>
           )}
         </div>
-  
+
         {/* Right Section - Glow Visual */}
         <div className="hidden md:flex w-1/2 relative items-center justify-center overflow-hidden">
           {/* Central Glow Orb */}
           <div className="absolute w-[500px] h-[500px] bg-purple-600 opacity-30 rounded-full blur-[150px]"></div>
-  
+
           {/* Crescent or Illustration */}
           <div className="z-10 text-[8rem] animate-pulse drop-shadow-[0_0_40px_rgba(255,215,0,0.6)]">
             🌙
           </div>
         </div>
-  
+
         {/* Gallery Button Floating (mobile only) */}
         <button
           onClick={goToGallery}
@@ -292,7 +292,6 @@ const Home = () => {
       </div>
     );
   }
-  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black flex flex-col">
@@ -308,7 +307,7 @@ const Home = () => {
             {name}'s Eid Greeting
           </span>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Gallery Button in Editor */}
           <button
@@ -318,7 +317,7 @@ const Home = () => {
             <span>🌟</span>
             <span className="hidden sm:inline">Gallery</span>
           </button>
-          
+
           <button
             onClick={handleSubmit}
             disabled={isLoading}
